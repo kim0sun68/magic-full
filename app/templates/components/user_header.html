@@ -1,0 +1,216 @@
+<!-- 로그인된 사용자용 공통 헤더 -->
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 상단 네비게이션 바 -->
+        <div class="flex justify-between items-center h-16">
+            <!-- 로고 및 브레드크럼 -->
+            <div class="flex items-center space-x-4">
+                <a href="/" class="text-2xl font-bold text-gray-900 hover:text-blue-600">마법옷장</a>
+                <span class="text-gray-400">/</span>
+                <nav class="flex items-center space-x-2 text-sm text-gray-500" x-data="breadcrumb()" x-init="updateBreadcrumb()">
+                    <a href="/dashboard" class="hover:text-blue-600">대시보드</a>
+                    <span x-show="currentPage !== 'dashboard'" class="text-gray-400">/</span>
+                    <span x-show="currentPage !== 'dashboard'" x-text="pageTitle" class="text-gray-900 font-medium"></span>
+                </nav>
+            </div>
+            
+            <!-- 메인 네비게이션 메뉴 -->
+            <nav class="hidden md:flex items-center space-x-1" x-data="mainNavigation()" x-init="updateActiveItem()">
+                <a href="/inventory" 
+                   :class="isActive('inventory') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    재고관리
+                </a>
+                <a href="/products" 
+                   :class="isActive('products') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    상품관리
+                </a>
+                <a href="/companies" 
+                   :class="isActive('companies') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    거래처관리
+                </a>
+                <a href="/orders" 
+                   :class="isActive('orders') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    주문관리
+                </a>
+                <a href="/chat" 
+                   :class="isActive('chat') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    채팅
+                </a>
+                <a href="/memos" 
+                   :class="isActive('memos') ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                   class="px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    메모
+                </a>
+            </nav>
+            
+            <!-- 모바일 메뉴 버튼 -->
+            <div class="md:hidden">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                        class="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 사용자 정보 -->
+            <div class="flex items-center space-x-4" x-data="userHeader()" x-init="loadUserInfo()">
+                <!-- 알림 아이콘 -->
+                <button class="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-3.405-3.405A2.032 2.032 0 0118 12.414V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v1.414c0 .395-.099.778-.277 1.114L2 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
+                </button>
+                
+                <!-- 사용자 메뉴 -->
+                <div class="relative">
+                    <button @click="userMenu = !userMenu" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <div class="h-8 w-8 rounded-full flex items-center justify-center text-white font-medium"
+                             :class="user?.role === 'admin' ? 'bg-red-500' : (company?.company_type === 'wholesale' ? 'bg-blue-500' : 'bg-green-500')">
+                            <span x-text="user?.role === 'admin' ? '관' : (company?.company_type === 'wholesale' ? '도' : '소')">관</span>
+                        </div>
+                        <span class="ml-2 text-gray-700" 
+                              x-text="user?.role === 'admin' ? '관리자' : (company?.company_type === 'wholesale' ? '도매업체' : '소매업체')">관리자</span>
+                        <svg class="ml-1 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    
+                    <div x-show="userMenu" @click.away="userMenu = false" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50">
+                        <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">프로필 설정</a>
+                        <a href="/company" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">회사 정보</a>
+                        <div class="border-t border-gray-100"></div>
+                        <button @click="logout()" 
+                                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 모바일 메뉴 -->
+        <div x-show="mobileMenuOpen" x-data="{ mobileMenuOpen: false }" class="md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-gray-50 border-t border-gray-200">
+                <a href="/inventory" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">재고관리</a>
+                <a href="/products" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">상품관리</a>
+                <a href="/companies" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">거래처관리</a>
+                <a href="/orders" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">주문관리</a>
+                <a href="/chat" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">채팅</a>
+                <a href="/memos" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">메모</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+function breadcrumb() {
+    return {
+        currentPage: 'dashboard',
+        pageTitle: '대시보드',
+        
+        updateBreadcrumb() {
+            const path = window.location.pathname;
+            const pageMap = {
+                '/dashboard': { page: 'dashboard', title: '대시보드' },
+                '/inventory': { page: 'inventory', title: '재고관리' },
+                '/products': { page: 'products', title: '상품관리' },
+                '/companies': { page: 'companies', title: '거래처관리' },
+                '/orders': { page: 'orders', title: '주문관리' },
+                '/chat': { page: 'chat', title: '채팅' },
+                '/memos': { page: 'memos', title: '메모' }
+            };
+            
+            const current = pageMap[path] || { page: 'dashboard', title: '대시보드' };
+            this.currentPage = current.page;
+            this.pageTitle = current.title;
+        }
+    }
+}
+
+function mainNavigation() {
+    return {
+        currentPage: '',
+        
+        updateActiveItem() {
+            const path = window.location.pathname;
+            this.currentPage = path.substring(1) || 'dashboard'; // Remove leading slash
+        },
+        
+        isActive(page) {
+            return this.currentPage === page;
+        }
+    }
+}
+
+function userHeader() {
+    return {
+        userMenu: false,
+        user: null,
+        company: null,
+        
+        async loadUserInfo() {
+            try {
+                // 사용자 정보 로드
+                const userResponse = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                
+                if (userResponse.ok) {
+                    this.user = await userResponse.json();
+                }
+                
+                // 회사 정보 로드 (관리자가 아닌 경우)
+                if (this.user && this.user.role !== 'admin') {
+                    const companyResponse = await fetch('/api/companies/me', {
+                        method: 'GET',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include'
+                    });
+                    
+                    if (companyResponse.ok) {
+                        this.company = await companyResponse.json();
+                    }
+                }
+            } catch (error) {
+                console.error('사용자 정보 로드 오류:', error);
+            }
+        },
+        
+        async logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '로그아웃되었습니다' }));
+                    setTimeout(() => window.location.href = '/login', 1000);
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast-error', { detail: '로그아웃 중 오류가 발생했습니다' }));
+                }
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '로그아웃 중 오류가 발생했습니다' }));
+            }
+        }
+    }
+}
+</script>

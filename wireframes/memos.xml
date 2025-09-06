@@ -1,0 +1,25 @@
+<page path="/memos">
+    <header></header>
+    <nav></nav>
+    <title>메모관리</title>
+    <actions>
+        <button>메모작성</button>
+    </actions>
+    <filters>
+        <search>제목 검색</search>
+        <select>거래처별</select>
+    </filters>
+    <list>
+        <item>
+            <title>메모제목</title>
+            <company>거래처명</company>
+            <date>작성일</date>
+            <actions>
+                <button>보기</button>
+                <button>수정</button>
+                <button>삭제</button>
+            </actions>
+        </item>
+    </list>
+    <footer></footer>
+</page>

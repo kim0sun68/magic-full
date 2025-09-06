@@ -1,0 +1,22 @@
+<page path="/notices">
+    <header></header>
+    <nav></nav>
+    <title>공지사항</title>
+    <actions class="admin-only">
+        <button>공지작성</button>
+    </actions>
+    <list>
+        <item>
+            <badge important>중요</badge>
+            <title>공지사항 제목</title>
+            <date>2024-01-15</date>
+            <author>관리자</author>
+        </item>
+        <item>
+            <title>일반 공지사항</title>
+            <date>2024-01-14</date>
+            <author>관리자</author>
+        </item>
+    </list>
+    <footer></footer>
+</page>

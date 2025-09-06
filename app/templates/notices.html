@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block header %}
+<!-- 공지사항 페이지 헤더 -->
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <!-- 로고 -->
+            <div class="flex items-center">
+                <a href="/" class="text-2xl font-bold text-indigo-600">마법옷장</a>
+                <span class="ml-2 text-sm text-gray-500">공지사항</span>
+            </div>
+            
+            <!-- 네비게이션 메뉴 -->
+            <div class="flex items-center space-x-4">
+                <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">홈</a>
+                <a href="/dashboard" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">대시보드</a>
+                <button onclick="history.back()" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    돌아가기
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="noticesPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">공지사항</h1>
+                    <p class="mt-1 text-sm text-gray-600">시스템 공지사항 및 중요 안내를 확인합니다</p>
+                </div>
+                
+                <!-- 액션 버튼 (관리자만) -->
+                <div x-show="userRole === 'admin'">
+                    <button @click="showCreateModal = true" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        공지작성
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 중요 공지사항 -->
+        <div x-show="importantNotices.length > 0" class="mb-8">
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center mb-3">
+                    <svg class="h-5 w-5 text-yellow-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <h3 class="text-lg font-medium text-yellow-800">중요 공지사항</h3>
+                </div>
+                
+                <template x-for="notice in importantNotices" :key="notice.id">
+                    <div @click="viewNotice(notice)" class="bg-white rounded-md p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow">
+                        <h4 class="font-medium text-gray-900" x-text="notice.title"></h4>
+                        <p class="text-sm text-gray-600 mt-1 line-clamp-2" x-text="notice.content"></p>
+                        <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
+                            <span x-text="'작성자: ' + notice.created_by_name"></span>
+                            <span x-text="formatDate(notice.created_at)"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- 일반 공지사항 -->
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">전체 공지사항</h3>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                <template x-for="notice in regularNotices" :key="notice.id">
+                    <div @click="viewNotice(notice)" class="p-6 hover:bg-gray-50 cursor-pointer transition-colors">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <h4 class="text-lg font-medium text-gray-900" x-text="notice.title"></h4>
+                                    <span x-show="notice.is_important" 
+                                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        중요
+                                    </span>
+                                    <span x-show="isNewNotice(notice)" 
+                                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        NEW
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-600 line-clamp-3" x-text="notice.content"></p>
+                                <div class="mt-3 flex items-center space-x-4 text-sm text-gray-500">
+                                    <span x-text="'작성자: ' + notice.created_by_name"></span>
+                                    <span x-text="formatDate(notice.created_at)"></span>
+                                    <span x-show="notice.updated_at !== notice.created_at" x-text="'수정: ' + formatDate(notice.updated_at)"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- 관리자 액션 버튼 (관리자 페이지에서만 제공) -->
+                            <div x-show="userRole === 'admin'" class="ml-4 flex-shrink-0">
+                                <a href="/admin" 
+                                   class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">
+                                    관리자 페이지에서 관리
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <!-- 빈 상태 -->
+        <div x-show="!loading && notices.length === 0" class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">공지사항이 없습니다</h3>
+            <p class="mt-1 text-sm text-gray-500">등록된 공지사항이 없습니다</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function noticesPage() {
+    return {
+        notices: [],
+        importantNotices: [],
+        regularNotices: [],
+        loading: false,
+        userRole: null, // 실제 사용자 정보에서 가져옴
+        showCreateModal: false,
+        
+        init() {
+            this.loadUserInfo();
+            this.loadNotices();
+        },
+        
+        async loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (response.ok) {
+                    const userData = await response.json();
+                    this.userRole = userData.role || 'user';
+                } else {
+                    this.userRole = 'user'; // 인증 실패 시 기본값
+                }
+            } catch (error) {
+                console.error('사용자 정보 로딩 실패:', error);
+                this.userRole = 'user';
+            }
+        },
+        
+        async loadNotices() {
+            this.loading = true;
+            try {
+                const response = await fetch('/api/notices');
+                const data = await response.json();
+                this.notices = data.items || [];
+                
+                // 중요 공지와 일반 공지 분리
+                this.importantNotices = this.notices.filter(notice => notice.is_important);
+                this.regularNotices = this.notices.filter(notice => !notice.is_important);
+                
+            } catch (error) {
+                console.error('공지사항 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '공지사항을 불러오는데 실패했습니다' }));
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        },
+        
+        isNewNotice(notice) {
+            const noticeDate = new Date(notice.created_at);
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+            return noticeDate > threeDaysAgo;
+        },
+        
+        viewNotice(notice) {
+            // TODO: 공지사항 상세보기 모달
+            window.dispatchEvent(new CustomEvent('toast-success', { detail: '공지사항 상세보기 기능 구현 예정' }));
+        },
+        
+        // 공용 페이지에서는 조회만 가능하므로 수정/삭제 기능 제거
+        // 관리자는 admin.html에서 공지사항 관리
+    }
+}
+</script>
+{% endblock %}

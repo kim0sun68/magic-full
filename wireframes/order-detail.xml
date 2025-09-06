@@ -1,0 +1,27 @@
+<page path="/orders/detail">
+    <header></header>
+    <nav></nav>
+    <title>주문 상세</title>
+    <info>
+        <label>주문번호: ORD-2024001</label>
+        <label>주문일자: 2024-01-15</label>
+        <label>거래처: ABC소매점</label>
+        <label>상태: 확인됨</label>
+    </info>
+    <table>
+        <headers>상품명|수량|단가|금액</headers>
+        <rows>주문 상품 목록</rows>
+    </table>
+    <summary>
+        <label>총 금액: 150,000원</label>
+    </summary>
+    <actions>
+        <button>상태변경</button>
+        <button>수정</button>
+        <button>취소</button>
+    </actions>
+    <notes>
+        <textarea>주문 메모</textarea>
+    </notes>
+    <footer></footer>
+</page>

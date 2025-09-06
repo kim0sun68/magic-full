@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: magic_nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./app/static:/usr/share/nginx/html/static
+      # SSL 인증서 (AWS 배포시 CloudFront 사용으로 선택적)
+      # - ${SSL_CERT_PATH:-/dev/null}:/etc/ssl/certs/ssl-cert.pem:ro
+      # - ${SSL_KEY_PATH:-/dev/null}:/etc/ssl/private/ssl-key.pem:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - magic_network
+    restart: unless-stopped
+    environment:
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+    healthcheck:
+      test: ["CMD",qov "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=${ENVIRONMENT:-development}
+    container_name: magic_app
+    environment:
+      # Supabase 설정
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_PROJECT_ID=${SUPABASE_PROJECT_ID:-vrsbmygqyfvvuaixibrh}
+      
+      # 보안 설정
+      - SESSION_SECRET=${SESSION_SECRET}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+      - COOKIE_SAMESITE=${COOKIE_SAMESITE:-lax}
+      - CSRF_SECRET=${CSRF_SECRET:-dev-csrf-secret}
+      
+      # Wasabi 클라우드 설정 (선택적)
+      - WASABI_ACCESS_KEY=${WASABI_ACCESS_KEY:-}
+      - WASABI_SECRET_KEY=${WASABI_SECRET_KEY:-}
+      - WASABI_BUCKET=${WASABI_BUCKET:-magic-storage}
+      - WASABI_ENDPOINT=${WASABI_ENDPOINT:-https://s3.ap-northeast-1.wasabisys.com}
+      
+      # 환경 구분
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      
+      # 성능 설정
+      - WORKERS=${WORKERS:-1}
+      - MAX_CONNECTIONS=${MAX_CONNECTIONS:-1000}
+      
+    volumes:
+      # 개발환경: 코드 볼륨 마운트 (AWS에서는 이미지 빌드로 처리)
+      - ${PWD}/app:/app:${VOLUME_MODE:-rw}
+      - ${PWD}/tests:/tests:ro
+    ports:
+      - "${FASTAPI_PORT:-8000}:8000"
+    networks:
+      - magic_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  magic_network:
+    driver: bridge
+
+volumes:
+  app_data:
+    driver: local

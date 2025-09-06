@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="profilePage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">프로필 관리</h1>
+                    <p class="mt-1 text-sm text-gray-600">계정 정보와 거래처 정보를 관리합니다</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 탭 네비게이션 -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button @click="activeTab = 'account'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'account', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'account'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    계정정보
+                </button>
+                <button @click="activeTab = 'company'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'company', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'company'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    거래처정보
+                </button>
+                <button @click="activeTab = 'password'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'password', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'password'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    비밀번호변경
+                </button>
+            </nav>
+        </div>
+
+        <!-- 계정정보 탭 -->
+        <div x-show="activeTab === 'account'">
+            <form @submit.prevent="updateAccount()" class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">계정 정보</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+                        <input type="email" id="email" :value="user.email" readonly
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500"
+                               placeholder="이메일은 변경할 수 없습니다">
+                    </div>
+                    
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">담당자명</label>
+                        <input type="text" id="name" x-model="accountForm.name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="담당자 이름을 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">연락처</label>
+                        <input type="tel" id="phone" x-model="accountForm.phone"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="010-1234-5678">
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="accountSubmitting"
+                                class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-md shadow-sm text-sm font-medium">
+                            <span x-show="!accountSubmitting">저장</span>
+                            <span x-show="accountSubmitting">저장 중...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 거래처정보 탭 -->
+        <div x-show="activeTab === 'company'">
+            <form @submit.prevent="updateCompany()" class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">거래처 정보</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label for="companyName" class="block text-sm font-medium text-gray-700 mb-2">업체명</label>
+                        <input type="text" id="companyName" x-model="companyForm.name" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="업체명을 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label for="businessNumber" class="block text-sm font-medium text-gray-700 mb-2">사업자번호</label>
+                        <input type="text" id="businessNumber" x-model="companyForm.business_number"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="000-00-00000">
+                    </div>
+                    
+                    <div>
+                        <label for="address" class="block text-sm font-medium text-gray-700 mb-2">주소</label>
+                        <input type="text" id="address" x-model="companyForm.address"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="업체 주소를 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">업체소개</label>
+                        <textarea id="description" x-model="companyForm.description" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  placeholder="업체에 대한 소개를 입력하세요"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="companySubmitting"
+                                class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-md shadow-sm text-sm font-medium">
+                            <span x-show="!companySubmitting">저장</span>
+                            <span x-show="companySubmitting">저장 중...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 비밀번호변경 탭 -->
+        <div x-show="activeTab === 'password'">
+            <form @submit.prevent="changePassword()" class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">비밀번호 변경</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-2">현재 비밀번호</label>
+                        <input type="password" id="currentPassword" x-model="passwordForm.current_password" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="현재 비밀번호를 입력하세요">
+                    </div>
+                    
+                    <div>
+                        <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-2">새 비밀번호</label>
+                        <input type="password" id="newPassword" x-model="passwordForm.new_password" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="새 비밀번호를 입력하세요">
+                        <p class="mt-1 text-xs text-gray-500">8자 이상, 영문+숫자 조합을 권장합니다</p>
+                    </div>
+                    
+                    <div>
+                        <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">새 비밀번호 확인</label>
+                        <input type="password" id="confirmPassword" x-model="passwordForm.new_password_confirm" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                               placeholder="새 비밀번호를 다시 입력하세요">
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="passwordSubmitting"
+                                class="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-md shadow-sm text-sm font-medium">
+                            <span x-show="!passwordSubmitting">비밀번호 변경</span>
+                            <span x-show="passwordSubmitting">변경 중...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function profilePage() {
+    return {
+        activeTab: 'account',
+        user: {},
+        company: {},
+        accountForm: { name: '', phone: '' },
+        companyForm: { name: '', business_number: '', address: '', description: '' },
+        passwordForm: { current_password: '', new_password: '', new_password_confirm: '' },
+        accountSubmitting: false,
+        companySubmitting: false,
+        passwordSubmitting: false,
+        
+        init() {
+            this.loadUserInfo();
+            this.loadCompanyInfo();
+        },
+        
+        async loadUserInfo() {
+            try {
+                const response = await fetch('/api/auth/me');
+                if (response.ok) {
+                    this.user = await response.json();
+                    this.accountForm.name = this.user.name;
+                    this.accountForm.phone = this.user.phone || '';
+                }
+            } catch (error) {
+                console.error('사용자 정보 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '사용자 정보를 불러오는데 실패했습니다' }));
+            }
+        },
+        
+        async loadCompanyInfo() {
+            try {
+                const response = await fetch('/api/companies/me');
+                if (response.ok) {
+                    this.company = await response.json();
+                    this.companyForm.name = this.company.name;
+                    this.companyForm.business_number = this.company.business_number || '';
+                    this.companyForm.address = this.company.address || '';
+                    this.companyForm.description = this.company.description || '';
+                }
+            } catch (error) {
+                console.error('거래처 정보 로딩 실패:', error);
+            }
+        },
+        
+        async updateAccount() {
+            this.accountSubmitting = true;
+            
+            try {
+                const response = await fetch('/api/auth/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.accountForm)
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '계정 정보가 수정되었습니다' }));
+                    this.loadUserInfo();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || '계정 정보 수정에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('계정 정보 수정 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: error.message }));
+            } finally {
+                this.accountSubmitting = false;
+            }
+        },
+        
+        async updateCompany() {
+            this.companySubmitting = true;
+            
+            try {
+                const response = await fetch('/api/companies/me', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.companyForm)
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '거래처 정보가 수정되었습니다' }));
+                    this.loadCompanyInfo();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || '거래처 정보 수정에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('거래처 정보 수정 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: error.message }));
+            } finally {
+                this.companySubmitting = false;
+            }
+        },
+        
+        async changePassword() {
+            // 비밀번호 일치 확인
+            if (this.passwordForm.new_password !== this.passwordForm.new_password_confirm) {
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '새 비밀번호가 일치하지 않습니다' }));
+                return;
+            }
+            
+            this.passwordSubmitting = true;
+            
+            try {
+                const response = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.passwordForm)
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '비밀번호가 변경되었습니다' }));
+                    // 폼 초기화
+                    this.passwordForm = { current_password: '', new_password: '', new_password_confirm: '' };
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || '비밀번호 변경에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('비밀번호 변경 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: error.message }));
+            } finally {
+                this.passwordSubmitting = false;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

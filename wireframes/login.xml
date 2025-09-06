@@ -1,0 +1,17 @@
+<page path="/login">
+    <header></header>
+    <form action="/api/auth/login">
+        <title>로그인</title>
+        <error-message />
+        
+        <input type="email" label="이메일" required />
+        <input type="password" label="비밀번호" required />
+        <!-- <link href="/forgotpw">비밀번호를 잊으셨나요?</link> -->
+        
+        <button type="submit">로그인</button>
+    </form>
+    <text>
+    아직 계정이 없으신가요? <link href="/signup">회원가입</link>
+    </text>
+    <footer></footer>
+</page>

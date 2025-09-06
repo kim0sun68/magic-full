@@ -1,0 +1,112 @@
+<!-- 관리자용 공통 헤더 -->
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- 상단 네비게이션 바 -->
+        <div class="flex justify-between items-center h-20">
+            <!-- 로고 및 관리자 제목 -->
+            <div class="flex items-center space-x-6">
+                <a href="/" class="text-2xl font-bold text-gray-900 hover:text-blue-600">마법옷장</a>
+                <div class="border-l border-gray-300 pl-6">
+                    <h1 class="text-2xl font-bold text-gray-900">관리자</h1>
+                    <p class="text-sm text-gray-600">시스템 관리 및 사용자 승인 처리</p>
+                </div>
+            </div>
+            
+            <!-- 관리자 정보 -->
+            <div class="flex items-center space-x-4" x-data="adminUserHeader()" x-init="loadUserInfo()">
+                <!-- 시스템 상태 아이콘 -->
+                <button class="relative p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-green-400"></span>
+                </button>
+                
+                <!-- 관리자 메뉴 -->
+                <div class="relative">
+                    <button @click="userMenu = !userMenu" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-red-500">
+                        <div class="h-8 w-8 rounded-full flex items-center justify-center text-white font-medium bg-red-500">
+                            <span>관</span>
+                        </div>
+                        <span class="ml-2 text-gray-700">관리자</span>
+                        <svg class="ml-1 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    
+                    <div x-show="userMenu" @click.away="userMenu = false" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 z-50">
+                        <a href="/admin/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">관리자 프로필</a>
+                        <a href="/admin/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">시스템 설정</a>
+                        <div class="border-t border-gray-100"></div>
+                        <button @click="logout()" 
+                                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                            로그아웃
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 모바일 메뉴 -->
+        <div x-show="mobileMenuOpen" x-data="{ mobileMenuOpen: false }" class="md:hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-gray-50 border-t border-gray-200">
+                <a href="/admin" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">관리자 대시보드</a>
+                <a href="/admin/users" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">사용자 관리</a>
+                <a href="/admin/notices" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">공지사항 관리</a>
+                <a href="/admin/system" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100">시스템 모니터링</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+function adminUserHeader() {
+    return {
+        userMenu: false,
+        user: null,
+        
+        async loadUserInfo() {
+            try {
+                const userResponse = await fetch('/api/auth/me', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                
+                if (userResponse.ok) {
+                    this.user = await userResponse.json();
+                }
+            } catch (error) {
+                console.error('관리자 정보 로드 오류:', error);
+            }
+        },
+        
+        async logout() {
+            try {
+                const response = await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '로그아웃되었습니다' }));
+                    setTimeout(() => window.location.href = '/login', 1000);
+                } else {
+                    window.dispatchEvent(new CustomEvent('toast-error', { detail: '로그아웃 중 오류가 발생했습니다' }));
+                }
+            } catch (error) {
+                console.error('로그아웃 오류:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '로그아웃 중 오류가 발생했습니다' }));
+            }
+        }
+    }
+}
+</script>

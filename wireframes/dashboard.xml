@@ -1,0 +1,28 @@
+<page path="/dashboard">
+    <header></header>
+    <nav>
+        <item active>대시보드</item>
+        <item>재고관리</item>
+        <item>상품관리</item>
+        <item>거래처관리</item>
+        <item>주문관리</item>
+        <item>채팅</item>
+        <item>메모</item>
+    </nav>
+    <summary>
+        <stat>오늘 주문: 12건</stat>
+        <stat>재고부족: 5개</stat>
+        <stat>신규메시지: 3건</stat>
+    </summary>
+    <section>
+        <title>최근 주문</title>
+        <list>주문 목록</list>
+        <button>전체보기</button>
+    </section>
+    <section>
+        <title>재고 알림</title>
+        <alerts>재고 부족 상품 목록</alerts>
+        <button>재고현황</button>
+    </section>
+    <footer></footer>
+</page>

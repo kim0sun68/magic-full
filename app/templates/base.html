@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }}{% endblock %} - 마법옷장</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.8/dist/ext/json-enc.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/main.css') }}">
+    
+    <!-- 보안 메타 태그 -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 토스트 알림 시스템 (간소화) -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2">
+        <!-- 토스트는 JavaScript로 동적 생성 -->
+    </div>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="min-h-screen flex flex-col">
+        {% block header %}
+        <!-- 헤더는 각 페이지에서 구현 -->
+        {% endblock %}
+        
+        <!-- 네비게이션 (로그인 후에만 표시) -->
+        {% block navigation %}{% endblock %}
+        
+        <!-- 메인 콘텐츠 -->
+        <main class="flex-grow">
+            {% block content %}{% endblock %}
+        </main>
+        
+        <!-- 푸터 -->
+        {% block footer %}
+        <footer class="bg-white border-t border-gray-200">
+            <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                    <a href="/terms" class="hover:text-gray-700">이용약관</a>
+                    <span>|</span>
+                    <a href="/privacy" class="hover:text-gray-700">개인정보처리방침</a>
+                </div>
+                <div class="mt-4 text-center text-sm text-gray-400">
+                    © 2025 마법옷장. All rights reserved.
+                </div>
+            </div>
+        </footer>
+        {% endblock %}
+    </div>
+
+    <!-- HTMX 설정 -->
+    <script>
+        // HTMX 전역 설정
+        htmx.config.defaultSwapStyle = 'outerHTML';
+        htmx.config.defaultSwapDelay = 100;
+        htmx.config.timeout = 10000;
+        
+        // HTMX 이벤트 리스너
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status >= 400) {
+                const message = event.detail.xhr.responseText || '오류가 발생했습니다';
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: message }));
+            }
+        });
+        
+        document.body.addEventListener('htmx:responseError', function(event) {
+            window.dispatchEvent(new CustomEvent('toast-error', { detail: '서버 연결 오류가 발생했습니다' }));
+        });
+    </script>
+    
+    <!-- 커스텀 JavaScript -->
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

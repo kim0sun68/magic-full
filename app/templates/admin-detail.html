@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="adminDetailPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">회원신청 상세보기</h1>
+                    <p class="mt-1 text-sm text-gray-600">회원 신청 정보를 상세히 확인하고 승인 여부를 결정합니다</p>
+                </div>
+                
+                <div>
+                    <button @click="history.back()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        돌아가기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-show="userDetail">
+        <!-- 계정 정보 섹션 -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">계정 정보</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">이메일</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.email"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">담당자명</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.name"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">연락처</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.phone || '미입력'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">가입일자</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="formatDate(userDetail.created_at)"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">계정 권한</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.role === 'admin' ? '관리자' : '일반회원'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">승인 상태</label>
+                        <span :class="{
+                            'bg-green-100 text-green-800': userDetail.approved,
+                            'bg-yellow-100 text-yellow-800': !userDetail.approved
+                        }" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                            <span x-text="userDetail.approved ? '승인됨' : '승인대기'"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 거래처 정보 섹션 -->
+        <div class="bg-white shadow rounded-lg mb-6" x-show="userDetail.company_id">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">거래처 정보</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체명</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.company_name"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">사업자번호</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.business_number || '미입력'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체 유형</label>
+                        <span :class="{
+                            'bg-blue-100 text-blue-800': userDetail.company_type === 'wholesale',
+                            'bg-green-100 text-green-800': userDetail.company_type === 'retail'
+                        }" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                            <span x-text="userDetail.company_type === 'wholesale' ? '도매업체' : '소매업체'"></span>
+                        </span>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체 주소</label>
+                        <p class="text-gray-900" x-text="userDetail.company_address || '미입력'"></p>
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3" x-show="userDetail.company_description">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체 소개</label>
+                        <p class="text-gray-900" x-text="userDetail.company_description"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체 상태</label>
+                        <span :class="{
+                            'bg-green-100 text-green-800': userDetail.company_status === 'active',
+                            'bg-gray-100 text-gray-800': userDetail.company_status === 'inactive',
+                            'bg-red-100 text-red-800': userDetail.company_status === 'suspended'
+                        }" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full">
+                            <span x-text="getCompanyStatusText(userDetail.company_status)"></span>
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">업체 등록일</label>
+                        <p class="text-gray-900" x-text="userDetail.company_created_at ? formatDate(userDetail.company_created_at) : '미등록'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 승인 정보 섹션 -->
+        <div class="bg-white shadow rounded-lg mb-6" x-show="userDetail.approved">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">승인 정보</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">승인일자</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="formatDate(userDetail.approved_at)"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">승인자</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="userDetail.approved_by || '시스템'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 액션 버튼 -->
+        <div class="bg-white shadow rounded-lg p-6" x-show="!userDetail.approved">
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button @click="approveUser(true)" 
+                        :disabled="processing"
+                        class="flex-1 max-w-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-md shadow-sm text-lg font-medium transition-colors">
+                    <span x-show="!processing">승인</span>
+                    <span x-show="processing">처리 중...</span>
+                </button>
+                
+                <button @click="approveUser(false)" 
+                        :disabled="processing"
+                        class="flex-1 max-w-xs bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white px-6 py-3 rounded-md shadow-sm text-lg font-medium transition-colors">
+                    <span x-show="!processing">거부</span>
+                    <span x-show="processing">처리 중...</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 이미 승인된 경우 메시지 -->
+        <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center" x-show="userDetail.approved">
+            <p class="text-green-800 text-lg font-medium">이미 승인된 회원입니다</p>
+        </div>
+    </div>
+
+    <!-- 로딩 상태 -->
+    <div class="min-h-screen flex items-center justify-center" x-show="!userDetail && !error">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+            <p class="mt-4 text-lg text-gray-600">회원 정보를 불러오는 중...</p>
+        </div>
+    </div>
+
+    <!-- 에러 상태 -->
+    <div class="min-h-screen flex items-center justify-center" x-show="error">
+        <div class="text-center">
+            <div class="bg-red-100 border border-red-300 rounded-lg p-6 max-w-md">
+                <h3 class="text-lg font-medium text-red-900 mb-2">오류 발생</h3>
+                <p class="text-red-700" x-text="error"></p>
+                <button @click="location.href='/admin'" 
+                        class="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    관리자 페이지로 돌아가기
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 토스트 알림 -->
+<div x-data="toastNotification()" @toast-success.window="showToast('success', $event.detail)"
+     @toast-error.window="showToast('error', $event.detail)" 
+     class="fixed top-4 right-4 z-50">
+    <div x-show="visible" x-transition class="max-w-sm bg-white shadow-lg rounded-lg pointer-events-auto">
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg x-show="type === 'success'" class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <svg x-show="type === 'error'" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div class="ml-3 w-0 flex-1">
+                    <p class="text-sm font-medium text-gray-900" x-text="message"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminDetailPage() {
+    return {
+        userDetail: null,
+        processing: false,
+        error: null,
+
+        async init() {
+            await this.loadUserDetail();
+        },
+
+        async loadUserDetail() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const pathParts = window.location.pathname.split('/');
+                const userId = urlParams.get('id') || pathParts[pathParts.length - 2]; // /admin/users/{userId}/detail에서 userId 추출
+                
+                if (!userId) {
+                    this.error = '사용자 ID를 찾을 수 없습니다';
+                    return;
+                }
+
+                const response = await fetch(`/api/admin/users/${userId}/detail`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        this.error = '사용자를 찾을 수 없습니다';
+                    } else if (response.status === 403) {
+                        this.error = '접근 권한이 없습니다';
+                    } else {
+                        this.error = '사용자 정보를 불러오는데 실패했습니다';
+                    }
+                    return;
+                }
+
+                this.userDetail = await response.json();
+            } catch (error) {
+                console.error('사용자 상세 정보 로드 실패:', error);
+                this.error = '네트워크 오류가 발생했습니다';
+            }
+        },
+
+        async approveUser(approved) {
+            if (this.processing) return;
+            
+            const action = approved ? '승인' : '거부';
+            if (!confirm(`정말로 이 회원을 ${action}하시겠습니까?`)) {
+                return;
+            }
+
+            this.processing = true;
+            
+            try {
+                const response = await fetch(`/api/admin/users/${this.userDetail.id}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        user_id: this.userDetail.id,
+                        approved: approved,
+                        reason: null
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `${action} 처리에 실패했습니다`);
+                }
+
+                const result = await response.json();
+                
+                // 승인 상태 업데이트
+                this.userDetail.approved = approved;
+                if (approved) {
+                    this.userDetail.approved_at = new Date().toISOString();
+                }
+
+                // 토스트 알림
+                window.dispatchEvent(new CustomEvent('toast-success', {
+                    detail: result.message || `회원 ${action}이 완료되었습니다`
+                }));
+
+                // 3초 후 관리자 페이지로 이동
+                setTimeout(() => {
+                    window.location.href = '/admin';
+                }, 3000);
+
+            } catch (error) {
+                console.error(`회원 ${action} 실패:`, error);
+                window.dispatchEvent(new CustomEvent('toast-error', {
+                    detail: error.message || `${action} 처리 중 오류가 발생했습니다`
+                }));
+            } finally {
+                this.processing = false;
+            }
+        },
+
+        formatDate(dateString) {
+            if (!dateString) return '미입력';
+            const date = new Date(dateString);
+            return date.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        },
+
+        getCompanyStatusText(status) {
+            const statusMap = {
+                'active': '활성',
+                'inactive': '비활성',
+                'suspended': '정지'
+            };
+            return statusMap[status] || '알 수 없음';
+        }
+    }
+}
+
+function toastNotification() {
+    return {
+        visible: false,
+        type: 'success',
+        message: '',
+
+        showToast(type, message) {
+            this.type = type;
+            this.message = message;
+            this.visible = true;
+            
+            setTimeout(() => {
+                this.visible = false;
+            }, 5000);
+        }
+    }
+}
+</script>
+{% endblock %}

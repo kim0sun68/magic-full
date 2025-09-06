@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="productFormPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900" x-text="isEdit ? '상품 수정' : '상품 등록'"></h1>
+                    <p class="mt-1 text-sm text-gray-600">아동복 상품 정보를 입력합니다</p>
+                </div>
+                
+                <div>
+                    <button @click="history.back()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        돌아가기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form @submit.prevent="submitForm()" class="space-y-8">
+            <!-- 기본 정보 섹션 -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">기본 정보</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="code" class="block text-sm font-medium text-gray-700 mb-2">상품코드 *</label>
+                            <input type="text" id="code" x-model="form.code" required
+                                   :disabled="isEdit"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-50"
+                                   placeholder="예: CHI001">
+                            <p class="mt-1 text-xs text-gray-500">고유한 상품 코드를 입력하세요</p>
+                        </div>
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">상품명 *</label>
+                            <input type="text" id="name" x-model="form.name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="상품명을 입력하세요">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">카테고리 *</label>
+                            <select id="category" x-model="form.category_id" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">카테고리 선택</option>
+                                <template x-for="category in categories" :key="category.id">
+                                    <option :value="category.id" x-text="category.name"></option>
+                                </template>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ageGroup" class="block text-sm font-medium text-gray-700 mb-2">연령대</label>
+                            <select id="ageGroup" x-model="form.age_group"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">연령대 선택</option>
+                                <option value="0-12m">0-12개월</option>
+                                <option value="1-2y">1-2세</option>
+                                <option value="3-5y">3-5세</option>
+                                <option value="6-10y">6-10세</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="gender" class="block text-sm font-medium text-gray-700 mb-2">성별</label>
+                            <select id="gender" x-model="form.gender"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">성별 선택</option>
+                                <option value="unisex">공용</option>
+                                <option value="boys">남아</option>
+                                <option value="girls">여아</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 가격 정보 섹션 -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">가격 정보</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="wholesalePrice" class="block text-sm font-medium text-gray-700 mb-2">도매가 *</label>
+                            <div class="relative">
+                                <input type="number" id="wholesalePrice" x-model="form.wholesale_price" required min="0"
+                                       class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="0">
+                                <span class="absolute right-3 top-2 text-sm text-gray-500">원</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="retailPrice" class="block text-sm font-medium text-gray-700 mb-2">소매가</label>
+                            <div class="relative">
+                                <input type="number" id="retailPrice" x-model="form.retail_price" min="0"
+                                       class="w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                       placeholder="0">
+                                <span class="absolute right-3 top-2 text-sm text-gray-500">원</span>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">권장 소매가 (선택사항)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 상품 설명 섹션 -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">상품 설명</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">상품 설명</label>
+                        <textarea id="description" x-model="form.description" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                  placeholder="상품에 대한 상세한 설명을 입력하세요"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="images" class="block text-sm font-medium text-gray-700 mb-2">상품 이미지</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                            <input type="file" id="images" @change="handleImageUpload" multiple accept="image/*" class="hidden">
+                            <label for="images" class="cursor-pointer">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-sm text-gray-600">클릭하여 이미지를 업로드하세요</p>
+                                <p class="text-xs text-gray-400 mt-1">JPG, PNG 파일 (최대 5MB, 최대 5개)</p>
+                            </label>
+                        </div>
+                        
+                        <!-- 업로드된 이미지 미리보기 -->
+                        <div x-show="form.images.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <template x-for="(image, index) in form.images" :key="index">
+                                <div class="relative group">
+                                    <img :src="image.preview || image.url" class="w-full h-24 object-cover rounded-lg">
+                                    <button @click="removeImage(index)" type="button"
+                                            class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="flex justify-end space-x-3 pt-6">
+                <button type="button" @click="history.back()" 
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-md shadow-sm text-sm font-medium">
+                    취소
+                </button>
+                <button type="submit" :disabled="submitting"
+                        class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white px-6 py-2 rounded-md shadow-sm text-sm font-medium">
+                    <span x-show="!submitting" x-text="isEdit ? '수정' : '등록'"></span>
+                    <span x-show="submitting">처리 중...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function productFormPage() {
+    return {
+        isEdit: false,
+        submitting: false,
+        categories: [],
+        form: {
+            code: '',
+            name: '',
+            category_id: '',
+            age_group: '',
+            gender: '',
+            wholesale_price: '',
+            retail_price: '',
+            description: '',
+            images: []
+        },
+        
+        init() {
+            this.loadCategories();
+            this.checkEditMode();
+        },
+        
+        checkEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            if (productId) {
+                this.isEdit = true;
+                this.loadProduct(productId);
+            }
+        },
+        
+        async loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                this.categories = await response.json();
+            } catch (error) {
+                console.error('카테고리 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '카테고리 정보를 불러오는데 실패했습니다' }));
+            }
+        },
+        
+        async loadProduct(productId) {
+            try {
+                const response = await fetch(`/api/products/${productId}`);
+                if (response.ok) {
+                    const product = await response.json();
+                    this.form = {
+                        code: product.code,
+                        name: product.name,
+                        category_id: product.category_id,
+                        age_group: product.age_group || '',
+                        gender: product.gender || '',
+                        wholesale_price: product.wholesale_price,
+                        retail_price: product.retail_price || '',
+                        description: product.description || '',
+                        images: product.images || []
+                    };
+                } else {
+                    throw new Error('상품 정보 로딩 실패');
+                }
+            } catch (error) {
+                console.error('상품 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '상품 정보를 불러오는데 실패했습니다' }));
+            }
+        },
+        
+        handleImageUpload(event) {
+            const files = Array.from(event.target.files);
+            
+            if (this.form.images.length + files.length > 5) {
+                window.dispatchEvent(new CustomEvent('toast-warning', { detail: '최대 5개까지 이미지를 업로드할 수 있습니다' }));
+                return;
+            }
+            
+            files.forEach(file => {
+                if (file.size > 5 * 1024 * 1024) {
+                    window.dispatchEvent(new CustomEvent('toast-warning', { detail: `${file.name}은 5MB를 초과합니다` }));
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.form.images.push({
+                        file: file,
+                        preview: e.target.result,
+                        name: file.name
+                    });
+                };
+                reader.readAsDataURL(file);
+            });
+        },
+        
+        removeImage(index) {
+            this.form.images.splice(index, 1);
+        },
+        
+        async submitForm() {
+            this.submitting = true;
+            
+            try {
+                // 필수 필드 검증
+                if (!this.form.code || !this.form.name || !this.form.category_id || !this.form.wholesale_price) {
+                    throw new Error('필수 항목을 모두 입력해주세요');
+                }
+                
+                const formData = new FormData();
+                Object.keys(this.form).forEach(key => {
+                    if (key !== 'images') {
+                        formData.append(key, this.form[key]);
+                    }
+                });
+                
+                // 이미지 파일 추가
+                this.form.images.forEach((image, index) => {
+                    if (image.file) {
+                        formData.append('images', image.file);
+                    }
+                });
+                
+                const url = this.isEdit ? `/api/products/${this.getProductId()}` : '/api/products';
+                const method = this.isEdit ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const action = this.isEdit ? '수정' : '등록';
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: `상품이 ${action}되었습니다` }));
+                    setTimeout(() => history.back(), 1000);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || '저장에 실패했습니다');
+                }
+                
+            } catch (error) {
+                console.error('상품 저장 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: error.message }));
+            } finally {
+                this.submitting = false;
+            }
+        },
+        
+        getProductId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+    }
+}
+</script>
+{% endblock %}

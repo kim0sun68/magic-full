@@ -1,0 +1,7 @@
+<header>
+    <left>마법옷장</left>
+    <right>
+        <button>로그인</button>
+        <button>회원가입</button>
+    </right>
+</header>

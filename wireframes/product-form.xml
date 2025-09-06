@@ -1,0 +1,30 @@
+<page path="/products/form">
+    <header></header>
+    <nav></nav>
+    <title>상품 등록/수정</title>
+    <form action="/api/products">
+        <section>
+            <subtitle>기본 정보</subtitle>
+            <input type="text" label="상품코드" required />
+            <input type="text" label="상품명" required />
+            <select label="카테고리" required />
+            <select label="연령대" />
+            <select label="성별" />
+        </section>
+        <section>
+            <subtitle>가격 정보</subtitle>
+            <input type="number" label="도매가" required />
+            <input type="number" label="소매가" />
+        </section>
+        <section>
+            <subtitle>상품 설명</subtitle>
+            <textarea label="상품설명" />
+            <file label="상품이미지" multiple />
+        </section>
+        <actions>
+            <button type="submit">저장</button>
+            <button type="button">취소</button>
+        </actions>
+    </form>
+    <footer></footer>
+</page>

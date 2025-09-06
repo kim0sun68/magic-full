@@ -1,0 +1,26 @@
+<page path="/products">
+    <header></header>
+    <nav></nav>
+    <title>상품관리</title>
+    <actions>
+        <button>상품등록</button>
+        <button>내보내기</button>
+    </actions>
+    <filters>
+        <search>상품명 검색</search>
+        <select>카테고리</select>
+        <select>연령대</select>
+    </filters>
+    <grid>
+        <item>
+            <image>상품이미지</image>
+            <name>상품명</name>
+            <price>가격</price>
+            <actions>
+                <button>수정</button>
+                <button>삭제</button>
+            </actions>
+        </item>
+    </grid>
+    <footer></footer>
+</page>

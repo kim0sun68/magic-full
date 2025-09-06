@@ -1,0 +1,22 @@
+<page path="/companies">
+    <header></header>
+    <nav></nav>
+    <title>거래처관리</title>
+    <actions>
+        <button>거래신청</button>
+    </actions>
+    <tabs>
+        <tab active>거래중</tab>
+        <tab>대기중</tab>
+        <tab>전체</tab>
+    </tabs>
+    <filters>
+        <search>업체명 검색</search>
+        <select>업체유형</select>
+    </filters>
+    <table>
+        <headers>업체명|유형|담당자|연락처|상태</headers>
+        <rows>거래처 데이터</rows>
+    </table>
+    <footer></footer>
+</page>

@@ -1,0 +1,30 @@
+<page path="/profile">
+    <header></header>
+    <nav></nav>
+    <title>프로필 관리</title>
+    <tabs>
+        <tab active>계정정보</tab>
+        <tab>거래처정보</tab>
+        <tab>비밀번호변경</tab>
+    </tabs>
+    <form action="/api/profile">
+        <section>
+            <subtitle>계정 정보</subtitle>
+            <input type="email" label="이메일" readonly />
+            <input type="text" label="담당자명" />
+            <input type="tel" label="연락처" />
+        </section>
+        <section>
+            <subtitle>거래처 정보</subtitle>
+            <input type="text" label="업체명" />
+            <input type="text" label="사업자번호" />
+            <input type="text" label="주소" />
+            <textarea label="업체소개" />
+        </section>
+        <actions>
+            <button type="submit">저장</button>
+            <button type="button">취소</button>
+        </actions>
+    </form>
+    <footer></footer>
+</page>

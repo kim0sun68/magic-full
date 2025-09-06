@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="orderDetailPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">주문 상세</h1>
+                    <p class="mt-1 text-sm text-gray-600">주문 정보를 상세히 확인하고 관리합니다</p>
+                </div>
+                
+                <div>
+                    <button @click="history.back()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        돌아가기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-show="order">
+        <!-- 주문 정보 섹션 -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">주문 정보</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">주문번호</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="order.order_number"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">주문일자</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="formatDate(order.created_at)"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">거래처</label>
+                        <p class="text-lg font-semibold text-gray-900" x-text="order.company_name"></p>
+                        <p class="text-sm text-gray-500" x-text="order.company_type === 'wholesale' ? '도매업체' : '소매업체'"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">상태</label>
+                        <span :class="{
+                            'bg-yellow-100 text-yellow-800': order.status === 'pending',
+                            'bg-blue-100 text-blue-800': order.status === 'confirmed',
+                            'bg-purple-100 text-purple-800': order.status === 'shipped',
+                            'bg-green-100 text-green-800': order.status === 'delivered',
+                            'bg-red-100 text-red-800': order.status === 'cancelled'
+                        }" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                            <span x-text="getStatusText(order.status)"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주문 상품 목록 -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">주문 상품</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상품명</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상품코드</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">수량</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">단가</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">금액</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="item in order.items" :key="item.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-10 w-10 rounded-lg object-cover mr-3" 
+                                             :src="item.product_image || '/static/images/placeholder.jpg'" 
+                                             :alt="item.product_name">
+                                        <div>
+                                            <div class="text-sm font-medium text-gray-900" x-text="item.product_name"></div>
+                                            <div class="text-sm text-gray-500" x-text="item.category_name"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.product_code"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.quantity + '개'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.unit_price.toLocaleString() + '원'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" x-text="item.total_price.toLocaleString() + '원'"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 주문 요약 -->
+        <div class="bg-white shadow rounded-lg mb-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">주문 요약</h3>
+            </div>
+            <div class="p-6">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="font-medium text-gray-900">총 주문 금액:</span>
+                    <span class="font-bold text-indigo-600 text-xl" x-text="order.total_amount.toLocaleString() + '원'"></span>
+                </div>
+                <div class="mt-2 text-sm text-gray-500">
+                    <span x-text="'총 ' + order.items.length + '개 상품'"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주문 액션 -->
+        <div class="bg-white shadow rounded-lg mb-6" x-show="canManageOrder()">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">주문 관리</h3>
+            </div>
+            <div class="p-6">
+                <div class="flex space-x-3">
+                    <button @click="updateStatus('confirmed')" x-show="order.status === 'pending' && userCompanyType === 'wholesale'"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        주문 확인
+                    </button>
+                    <button @click="updateStatus('shipped')" x-show="order.status === 'confirmed' && userCompanyType === 'wholesale'"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        배송 시작
+                    </button>
+                    <button @click="updateStatus('delivered')" x-show="order.status === 'shipped' && userCompanyType === 'wholesale'"
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        배송 완료
+                    </button>
+                    <button @click="updateStatus('cancelled')" x-show="order.status === 'pending'"
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        주문 취소
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주문 메모 -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">주문 메모</h3>
+            </div>
+            <div class="p-6">
+                <textarea x-model="orderNotes" @change="saveNotes()" rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                          placeholder="주문에 대한 메모를 입력하세요..."></textarea>
+                <p class="mt-2 text-xs text-gray-500">메모는 자동으로 저장됩니다</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 로딩 상태 -->
+    <div x-show="!order && loading" class="text-center py-12">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <p class="mt-2 text-sm text-gray-500">주문 정보를 불러오는 중...</p>
+    </div>
+    
+    <!-- 오류 상태 -->
+    <div x-show="!order && !loading" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">주문을 찾을 수 없습니다</h3>
+        <p class="mt-1 text-sm text-gray-500">요청한 주문 정보가 존재하지 않습니다</p>
+        <div class="mt-6">
+            <button @click="history.back()" 
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                돌아가기
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+function orderDetailPage() {
+    return {
+        order: null,
+        orderNotes: '',
+        loading: true,
+        userCompanyType: 'wholesale', // TODO: 실제 사용자 정보에서 가져오기
+        
+        init() {
+            this.loadOrder();
+        },
+        
+        async loadOrder() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderId = urlParams.get('id');
+            
+            if (!orderId) {
+                this.loading = false;
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/orders/${orderId}`);
+                if (response.ok) {
+                    this.order = await response.json();
+                    this.orderNotes = this.order.notes || '';
+                } else {
+                    throw new Error('주문 정보 조회 실패');
+                }
+            } catch (error) {
+                console.error('주문 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '주문 정보를 불러오는데 실패했습니다' }));
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        getStatusText(status) {
+            const statusMap = {
+                'pending': '대기',
+                'confirmed': '확인',
+                'shipped': '배송',
+                'delivered': '완료',
+                'cancelled': '취소'
+            };
+            return statusMap[status] || status;
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        },
+        
+        canManageOrder() {
+            if (!this.order) return false;
+            
+            // 관리자는 모든 주문 관리 가능
+            if (this.userRole === 'admin') return true;
+            
+            // 도매업체는 자신의 주문 관리 가능
+            if (this.userCompanyType === 'wholesale') return true;
+            
+            // 소매업체는 pending 상태에서만 취소 가능
+            if (this.userCompanyType === 'retail' && this.order.status === 'pending') return true;
+            
+            return false;
+        },
+        
+        async updateStatus(newStatus) {
+            const statusText = this.getStatusText(newStatus);
+            if (!confirm(`주문 상태를 "${statusText}"로 변경하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch(`/api/orders/${this.order.id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (response.ok) {
+                    this.order.status = newStatus;
+                    window.dispatchEvent(new CustomEvent('toast-success', { 
+                        detail: `주문 상태가 "${statusText}"로 변경되었습니다` 
+                    }));
+                } else {
+                    throw new Error('상태 변경 실패');
+                }
+            } catch (error) {
+                console.error('주문 상태 변경 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '주문 상태 변경에 실패했습니다' }));
+            }
+        },
+        
+        async saveNotes() {
+            if (!this.order) return;
+            
+            try {
+                const response = await fetch(`/api/orders/${this.order.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes: this.orderNotes })
+                });
+                
+                if (response.ok) {
+                    this.order.notes = this.orderNotes;
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '메모가 저장되었습니다' }));
+                } else {
+                    throw new Error('메모 저장 실패');
+                }
+            } catch (error) {
+                console.error('메모 저장 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '메모 저장에 실패했습니다' }));
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

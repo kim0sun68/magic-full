@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% include "components/user_header.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="productsPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">상품관리</h1>
+                    <p class="mt-1 text-sm text-gray-600">아동복 상품을 등록하고 관리합니다</p>
+                </div>
+                
+                <!-- 액션 버튼 -->
+                <div class="flex space-x-3" x-show="userCompanyType === 'wholesale'">
+                    <button @click="location.href='/products/form'" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        상품등록
+                    </button>
+                    <button @click="exportProducts()" 
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        내보내기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 필터 섹션 -->
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">상품명 검색</label>
+                    <input type="text" id="search" x-model="searchTerm" @input="debounceSearch()"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="상품명을 입력하세요">
+                </div>
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                    <select id="category" x-model="selectedCategory" @change="loadProducts()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">전체 카테고리</option>
+                        <template x-for="category in categories" :key="category.id">
+                            <option :value="category.id" x-text="category.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label for="ageGroup" class="block text-sm font-medium text-gray-700 mb-1">연령대</label>
+                    <select id="ageGroup" x-model="selectedAgeGroup" @change="loadProducts()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">전체 연령대</option>
+                        <option value="0-12m">0-12개월</option>
+                        <option value="1-2y">1-2세</option>
+                        <option value="3-5y">3-5세</option>
+                        <option value="6-10y">6-10세</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button @click="loadProducts()" 
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        검색
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 상품 그리드 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="products-grid">
+            <template x-for="product in products" :key="product.id">
+                <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow duration-200">
+                    <!-- 상품 이미지 -->
+                    <div class="aspect-square bg-gray-200 rounded-t-lg overflow-hidden">
+                        <img :src="product.images[0] || '/static/images/placeholder.jpg'" 
+                             :alt="product.name"
+                             class="w-full h-full object-cover hover:scale-105 transition-transform duration-200">
+                    </div>
+                    
+                    <!-- 상품 정보 -->
+                    <div class="p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="text-sm font-medium text-gray-900 line-clamp-2" x-text="product.name"></h3>
+                            <span :class="{
+                                'bg-green-100 text-green-800': product.is_active,
+                                'bg-red-100 text-red-800': !product.is_active
+                            }" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                <span x-text="product.is_active ? '활성' : '비활성'"></span>
+                            </span>
+                        </div>
+                        
+                        <p class="text-xs text-gray-500 mb-2" x-text="product.code"></p>
+                        
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-sm">
+                                <span class="text-gray-500">도매가:</span>
+                                <span class="font-medium text-gray-900" x-text="product.wholesale_price.toLocaleString() + '원'"></span>
+                            </div>
+                            <div class="text-xs text-gray-500" x-text="product.age_group"></div>
+                        </div>
+                        
+                        <!-- 액션 버튼 -->
+                        <div class="flex space-x-2" x-show="userCompanyType === 'wholesale'">
+                            <button @click="editProduct(product)" 
+                                    class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-xs font-medium">
+                                수정
+                            </button>
+                            <button @click="deleteProduct(product)" 
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-xs font-medium">
+                                삭제
+                            </button>
+                        </div>
+                        
+                        <!-- 주문 버튼 (소매업체용) -->
+                        <div x-show="userCompanyType === 'retail'">
+                            <button @click="orderProduct(product)" 
+                                    class="w-full bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-xs font-medium">
+                                주문하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        
+        <!-- 로딩 상태 -->
+        <div x-show="loading" class="text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+            <p class="mt-2 text-sm text-gray-500">로딩 중...</p>
+        </div>
+        
+        <!-- 빈 상태 -->
+        <div x-show="!loading && products.length === 0" class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">상품이 없습니다</h3>
+            <p class="mt-1 text-sm text-gray-500">새 상품을 등록해보세요</p>
+            <div class="mt-6" x-show="userCompanyType === 'wholesale'">
+                <button @click="location.href='/products/form'" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                    첫 상품 등록하기
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function productsPage() {
+    return {
+        searchTerm: '',
+        selectedCategory: '',
+        selectedAgeGroup: '',
+        products: [],
+        categories: [],
+        loading: false,
+        userCompanyType: 'wholesale', // TODO: 실제 사용자 정보에서 가져오기
+        
+        init() {
+            this.loadCategories();
+            this.loadProducts();
+        },
+        
+        async loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                this.categories = await response.json();
+            } catch (error) {
+                console.error('카테고리 로딩 실패:', error);
+            }
+        },
+        
+        async loadProducts() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams();
+                if (this.searchTerm) params.append('search', this.searchTerm);
+                if (this.selectedCategory) params.append('category_id', this.selectedCategory);
+                if (this.selectedAgeGroup) params.append('age_group', this.selectedAgeGroup);
+                
+                const response = await fetch(`/api/products?${params}`);
+                const data = await response.json();
+                this.products = data.items || [];
+            } catch (error) {
+                console.error('상품 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '상품 정보를 불러오는데 실패했습니다' }));
+            } finally {
+                this.loading = false;
+            }
+        },
+        
+        debounceSearch() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                this.loadProducts();
+            }, 500);
+        },
+        
+        editProduct(product) {
+            location.href = `/products/form?id=${product.id}`;
+        },
+        
+        async deleteProduct(product) {
+            if (!confirm(`상품 "${product.name}"을 정말 삭제하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch(`/api/products/${product.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '상품이 삭제되었습니다' }));
+                    this.loadProducts();
+                } else {
+                    throw new Error('삭제 실패');
+                }
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '상품 삭제에 실패했습니다' }));
+            }
+        },
+        
+        orderProduct(product) {
+            // TODO: 주문 모달 또는 주문 페이지로 이동
+            window.dispatchEvent(new CustomEvent('toast-success', { detail: '주문 기능 구현 예정' }));
+        },
+        
+        exportProducts() {
+            // TODO: 엑셀 내보내기 기능
+            window.dispatchEvent(new CustomEvent('toast-success', { detail: '내보내기 기능 구현 예정' }));
+        }
+    }
+}
+</script>
+{% endblock %}

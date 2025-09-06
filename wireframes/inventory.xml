@@ -1,0 +1,19 @@
+<page path="/inventory">
+    <header></header>
+    <nav></nav>
+    <title>재고관리</title>
+    <actions>
+        <button>재고조정</button>
+        <button>입고등록</button>
+    </actions>
+    <filters>
+        <search>상품명 검색</search>
+        <select>카테고리 선택</select>
+        <select>재고상태 선택</select>
+    </filters>
+    <table>
+        <headers>상품코드|상품명|현재재고|안전재고|상태</headers>
+        <rows>재고 데이터</rows>
+    </table>
+    <footer></footer>
+</page>

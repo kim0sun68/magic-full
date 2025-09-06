@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}로그인{% endblock %}
+
+{% block header %}
+<header class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+            <div class="flex-shrink-0">
+                <a href="/" class="text-2xl font-bold text-indigo-600">마법옷장</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/signup" 
+                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    회원가입
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                계정에 로그인
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                또는
+                <a href="/signup" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    새 계정을 만드세요
+                </a>
+            </p>
+        </div>
+        
+        <!-- 로그인 폼 -->
+        <form id="loginForm" class="mt-8 space-y-6">
+              
+            <!-- CSRF 토큰 -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            
+            <div class="rounded-md shadow-sm -space-y-px">
+                <!-- 이메일 -->
+                <div>
+                    <label for="email" class="sr-only">이메일 주소</label>
+                    <input id="email" 
+                           name="email" 
+                           type="email" 
+                           autocomplete="email" 
+                           required 
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                           placeholder="이메일 주소">
+                </div>
+                
+                <!-- 비밀번호 -->
+                <div>
+                    <label for="password" class="sr-only">비밀번호</label>
+                    <input id="password" 
+                           name="password" 
+                           type="password" 
+                           autocomplete="current-password" 
+                           required 
+                           class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" 
+                           placeholder="비밀번호">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <input id="remember-me" 
+                           name="remember-me" 
+                           type="checkbox" 
+                           class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                    <label for="remember-me" class="ml-2 block text-sm text-gray-900">
+                        로그인 상태 유지
+                    </label>
+                </div>
+
+                <div class="text-sm">
+                    <a href="/auth/password-reset" class="font-medium text-indigo-600 hover:text-indigo-500">
+                        비밀번호를 잊으셨나요?
+                    </a>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit" 
+                        class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                    </span>
+                    로그인
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 로그인 페이지 전용 JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const loginData = {
+            email: formData.get('email'),
+            password: formData.get('password')
+        };
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include', // This ensures cookies are stored
+                body: JSON.stringify(loginData)
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('로그인 성공:', data);
+                
+                // 토스트 메시지 표시
+                window.dispatchEvent(new CustomEvent('toast-success', { detail: '로그인 성공!' }));
+                
+                // 메인 페이지로 이동 (이제 자동으로 적절한 대시보드로 리다이렉트됨)
+                setTimeout(() => window.location.href = '/', 1500);
+                
+            } else {
+                const errorData = await response.json();
+                let errorMessage = errorData.detail || '로그인에 실패했습니다.';
+                
+                // 승인 대기 상태 명확한 안내
+                if (response.status === 403 && errorMessage.includes('승인 대기')) {
+                    errorMessage = '🔐 관리자 승인 대기 중입니다. 승인 완료 후 로그인해주세요.';
+                }
+                
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: errorMessage }));
+                alert(errorMessage);
+            }
+            
+        } catch (error) {
+            console.error('로그인 오류:', error);
+            const errorMessage = '서버 연결 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            window.dispatchEvent(new CustomEvent('toast-error', { detail: errorMessage }));
+            alert(errorMessage);
+        }
+    });
+    
+    console.log('로그인 페이지 로드 완료');
+});
+</script>
+{% endblock %}

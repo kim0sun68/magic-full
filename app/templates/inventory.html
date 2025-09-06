@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% include "components/user_header.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="inventoryPage()">
+    <!-- 페이지 헤더 -->
+    <div class="bg-white shadow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">재고관리</h1>
+                    <p class="mt-1 text-sm text-gray-600">상품 재고 현황을 관리하고 입출고를 처리합니다</p>
+                </div>
+                
+                <!-- 액션 버튼 -->
+                <div class="flex space-x-3">
+                    <button @click="showAdjustmentModal = true" 
+                            class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        재고조정
+                    </button>
+                    <button @click="showStockInModal = true" 
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        입고등록
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 필터 섹션 -->
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">상품명 검색</label>
+                    <input type="text" id="search" x-model="searchTerm" @input="debounceSearch()"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="상품명을 입력하세요">
+                </div>
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">카테고리</label>
+                    <select id="category" x-model="selectedCategory" @change="loadInventory()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">전체 카테고리</option>
+                        <template x-for="category in categories" :key="category.id">
+                            <option :value="category.id" x-text="category.name"></option>
+                        </template>
+                    </select>
+                </div>
+                <div>
+                    <label for="stockStatus" class="block text-sm font-medium text-gray-700 mb-1">재고상태</label>
+                    <select id="stockStatus" x-model="stockStatus" @change="loadInventory()"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="">전체</option>
+                        <option value="low">부족</option>
+                        <option value="normal">정상</option>
+                        <option value="high">과다</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button @click="loadInventory()" 
+                            class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                        검색
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 재고 테이블 -->
+        <div class="bg-white shadow overflow-hidden rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">재고 현황</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상품코드</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상품명</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">현재재고</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">안전재고</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">최종수정</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="inventory-table-body">
+                        <template x-for="item in inventory" :key="item.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.product_code"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900" x-text="item.product_name"></div>
+                                    <div class="text-sm text-gray-500" x-text="item.category_name"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.current_stock"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.minimum_stock"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span :class="{
+                                        'bg-red-100 text-red-800': item.current_stock < item.minimum_stock,
+                                        'bg-yellow-100 text-yellow-800': item.current_stock === item.minimum_stock,
+                                        'bg-green-100 text-green-800': item.current_stock > item.minimum_stock
+                                    }" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                        <span x-text="getStockStatus(item)"></span>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(item.last_updated)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <button @click="openAdjustment(item)" 
+                                            class="text-indigo-600 hover:text-indigo-900 mr-3">조정</button>
+                                    <button @click="openStockIn(item)" 
+                                            class="text-green-600 hover:text-green-900">입고</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function inventoryPage() {
+    return {
+        searchTerm: '',
+        selectedCategory: '',
+        stockStatus: '',
+        inventory: [],
+        categories: [],
+        showAdjustmentModal: false,
+        showStockInModal: false,
+        selectedItem: null,
+        
+        init() {
+            this.loadCategories();
+            this.loadInventory();
+        },
+        
+        async loadCategories() {
+            try {
+                const response = await fetch('/api/categories');
+                this.categories = await response.json();
+            } catch (error) {
+                console.error('카테고리 로딩 실패:', error);
+            }
+        },
+        
+        async loadInventory() {
+            try {
+                const params = new URLSearchParams();
+                if (this.searchTerm) params.append('search', this.searchTerm);
+                if (this.selectedCategory) params.append('category_id', this.selectedCategory);
+                if (this.stockStatus) params.append('stock_status', this.stockStatus);
+                
+                const response = await fetch(`/api/inventory?${params}`);
+                const data = await response.json();
+                this.inventory = data.items || [];
+            } catch (error) {
+                console.error('재고 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '재고 정보를 불러오는데 실패했습니다' }));
+            }
+        },
+        
+        debounceSearch() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                this.loadInventory();
+            }, 500);
+        },
+        
+        getStockStatus(item) {
+            if (item.current_stock < item.minimum_stock) return '부족';
+            if (item.current_stock === item.minimum_stock) return '주의';
+            return '정상';
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        },
+        
+        openAdjustment(item) {
+            this.selectedItem = item;
+            this.showAdjustmentModal = true;
+        },
+        
+        openStockIn(item) {
+            this.selectedItem = item;
+            this.showStockInModal = true;
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+<footer>
+    <container>
+        <links>
+            <link href="/terms">이용약관</link>
+            <separator>|</separator>
+            <link href="/privacy">개인정보처리방침</link>
+        </links>
+        <copyright>
+            <text>© 2025 마법옷장. All rights reserved.</text>
+        </copyright>
+    </container>
+</footer>

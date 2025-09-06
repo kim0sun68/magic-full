@@ -1,0 +1,57 @@
+<page path="/admin/users/{user_id}/detail">
+    <header></header>
+    <nav></nav>
+    <title>회원신청 상세보기</title>
+    
+    <breadcrumb>
+        <link>관리자</link>
+        <link>승인관리</link>
+        <text>회원신청 상세</text>
+    </breadcrumb>
+    
+    <section>
+        <subtitle>계정 정보</subtitle>
+        <info>
+            <label>이메일: test@example.com</label>
+            <label>담당자명: 김담당자</label>
+            <label>연락처: 010-1234-5678</label>
+            <label>가입일자: 2024-01-15</label>
+            <label>계정권한: 일반회원</label>
+            <label>승인상태: 승인대기</label>
+        </info>
+    </section>
+    
+    <section>
+        <subtitle>거래처 정보</subtitle>
+        <info>
+            <label>업체명: ABC상회</label>
+            <label>사업자번호: 123-45-67890</label>
+            <label>업체유형: 도매업체</label>
+            <label>업체주소: 서울시 중구 남대문로 123</label>
+            <label>업체소개: 아동복 전문 도매업체입니다</label>
+            <label>업체상태: 활성</label>
+            <label>업체등록일: 2024-01-15</label>
+        </info>
+    </section>
+    
+    <section condition="approved">
+        <subtitle>승인 정보</subtitle>
+        <info>
+            <label>승인일자: 2024-01-16</label>
+            <label>승인자: 관리자</label>
+        </info>
+    </section>
+    
+    <actions condition="not_approved">
+        <button type="approve">승인</button>
+        <button type="reject">거부</button>
+        <button type="back">돌아가기</button>
+    </actions>
+    
+    <actions condition="approved">
+        <button type="back">돌아가기</button>
+        <message>이미 승인된 회원입니다</message>
+    </actions>
+    
+    <footer></footer>
+</page>

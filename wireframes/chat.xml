@@ -1,0 +1,23 @@
+<page path="/chat">
+    <header></header>
+    <nav></nav>
+    <title>채팅</title>
+    <left>
+        <search>거래처 검색</search>
+        <rooms>
+            <room active>ABC소매점</room>
+            <room>XYZ도매상회</room>
+        </rooms>
+    </left>
+    <right>
+        <chat-header>ABC소매점</chat-header>
+        <messages>
+            <message>메시지 내용</message>
+        </messages>
+        <input>
+            <textarea>메시지 입력</textarea>
+            <button>전송</button>
+        </input>
+    </right>
+    <footer></footer>
+</page>

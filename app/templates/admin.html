@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% include "components/admin_header.html" %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50" x-data="adminPage()">
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 탭 네비게이션 -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button @click="activeTab = 'approval'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'approval', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'approval'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    승인관리
+                </button>
+                <button @click="activeTab = 'users'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'users', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'users'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    사용자관리
+                </button>
+                <button @click="activeTab = 'system'" 
+                        :class="{'border-indigo-500 text-indigo-600': activeTab === 'system', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'system'}"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    시스템관리
+                </button>
+            </nav>
+        </div>
+
+        <!-- 승인관리 탭 -->
+        <div x-show="activeTab === 'approval'">
+            <div class="bg-white shadow overflow-hidden rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">승인 대기 목록</h3>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">업체명</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">담당자</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">연락처</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">유형</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">신청일</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="user in pendingUsers" :key="user.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900" x-text="user.company_name"></div>
+                                        <div class="text-sm text-gray-500" x-text="user.business_number"></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900" x-text="user.name"></div>
+                                        <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="user.phone"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="{
+                                            'bg-blue-100 text-blue-800': user.company_type === 'wholesale',
+                                            'bg-green-100 text-green-800': user.company_type === 'retail'
+                                        }" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                            <span x-text="user.company_type === 'wholesale' ? '도매업체' : '소매업체'"></span>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(user.created_at)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <button @click="viewUserDetail(user.id)" 
+                                                class="text-blue-600 hover:text-blue-900 mr-3">세부정보</button>
+                                        <button @click="approveUser(user, true)" 
+                                                class="text-green-600 hover:text-green-900 mr-3">승인</button>
+                                        <button @click="approveUser(user, false)" 
+                                                class="text-red-600 hover:text-red-900">거부</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 빈 상태 -->
+                <div x-show="pendingUsers.length === 0" class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">승인 대기 중인 사용자가 없습니다</h3>
+                    <p class="mt-1 text-sm text-gray-500">모든 가입 신청이 처리되었습니다</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 사용자관리 탭 -->
+        <div x-show="activeTab === 'users'">
+            <div class="bg-white shadow overflow-hidden rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">전체 사용자 통계</h3>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-blue-600">전체 사용자</p>
+                                    <p class="text-2xl font-bold text-blue-900" x-text="userStats.total_users || 0"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-green-600">승인된 사용자</p>
+                                    <p class="text-2xl font-bold text-green-900" x-text="userStats.approved_users || 0"></p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-4 rounded-lg">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-8 w-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-yellow-600">승인 대기</p>
+                                    <p class="text-2xl font-bold text-yellow-900" x-text="userStats.pending_users || 0"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시스템관리 탭 -->
+        <div x-show="activeTab === 'system'">
+            <div class="space-y-6">
+                <!-- 공지사항 관리 -->
+                <div class="bg-white shadow overflow-hidden rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">공지사항 관리</h3>
+                        <button @click="showNoticeCreateModal = true" 
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md shadow-sm text-sm font-medium">
+                            공지작성
+                        </button>
+                    </div>
+                    
+                    <div class="p-6">
+                        <p class="text-sm text-gray-600 mb-4">최근 공지사항 관리</p>
+                        <div class="space-y-3">
+                            <template x-for="notice in recentNotices" :key="notice.id">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2">
+                                            <h4 class="text-sm font-medium text-gray-900" x-text="notice.title"></h4>
+                                            <span x-show="notice.is_important" 
+                                                  class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                중요
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1" x-text="formatDate(notice.created_at)"></p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button @click="editNotice(notice)" 
+                                                class="text-green-600 hover:text-green-900 text-sm">수정</button>
+                                        <button @click="deleteNotice(notice)" 
+                                                class="text-red-600 hover:text-red-900 text-sm">삭제</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <a href="/notices" class="text-indigo-600 hover:text-indigo-500 text-sm font-medium">
+                                모든 공지사항 보기 →
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 시스템 상태 -->
+                <div class="bg-white shadow overflow-hidden rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">시스템 상태</h3>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 mb-3">서비스 상태</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">웹 서비스</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            정상
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">데이터베이스</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            정상
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">파일 저장소</span>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            정상
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 mb-3">시스템 통계</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">도매업체 수</span>
+                                        <span class="text-sm font-medium text-gray-900" x-text="userStats.wholesale_users || 0"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">소매업체 수</span>
+                                        <span class="text-sm font-medium text-gray-900" x-text="userStats.retail_users || 0"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-600">관리자 수</span>
+                                        <span class="text-sm font-medium text-gray-900" x-text="userStats.admin_users || 0"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 공지작성 모달 -->
+    <div x-show="showNoticeCreateModal" 
+         x-transition:enter="ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 overflow-y-auto" 
+         @click.self="showNoticeCreateModal = false">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            
+            <!-- 모달 컨텐츠 -->
+            <div x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                
+                <!-- 모달 헤더 -->
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">공지사항 작성</h3>
+                        <button @click="showNoticeCreateModal = false" class="text-gray-400 hover:text-gray-600">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- 폼 필드 -->
+                    <div class="space-y-4">
+                        <!-- 제목 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">제목</label>
+                            <input type="text" 
+                                   x-model="noticeForm.title"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                   placeholder="공지사항 제목을 입력하세요"
+                                   maxlength="200">
+                        </div>
+                        
+                        <!-- 내용 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">내용</label>
+                            <textarea x-model="noticeForm.content"
+                                      rows="5"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                      placeholder="공지사항 내용을 입력하세요"></textarea>
+                        </div>
+                        
+                        <!-- 중요 공지 체크박스 -->
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   x-model="noticeForm.is_important"
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label class="ml-2 block text-sm text-gray-700">중요 공지사항</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 모달 푸터 -->
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="createNotice()" 
+                            :disabled="creatingNotice"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="creatingNotice" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span x-text="creatingNotice ? '작성 중...' : '작성'"></span>
+                    </button>
+                    <button @click="showNoticeCreateModal = false; noticeForm = { title: '', content: '', is_important: false }" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        취소
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function adminPage() {
+    return {
+        activeTab: 'approval',
+        pendingUsers: [],
+        recentNotices: [],
+        userStats: {},
+        showNoticeCreateModal: false,
+        creatingNotice: false,
+        noticeForm: {
+            title: '',
+            content: '',
+            is_important: false
+        },
+        
+        init() {
+            this.loadPendingUsers();
+            this.loadUserStats();
+            this.loadRecentNotices();
+        },
+        
+        async loadPendingUsers() {
+            try {
+                const response = await fetch('/api/admin/users/pending');
+                this.pendingUsers = await response.json();
+            } catch (error) {
+                console.error('승인 대기 사용자 로딩 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '승인 대기 사용자 정보를 불러오는데 실패했습니다' }));
+            }
+        },
+        
+        async loadUserStats() {
+            try {
+                const response = await fetch('/api/admin/statistics');
+                const data = await response.json();
+                this.userStats = data.users || {};
+            } catch (error) {
+                console.error('사용자 통계 로딩 실패:', error);
+            }
+        },
+        
+        async loadRecentNotices() {
+            try {
+                const response = await fetch('/api/admin/notices?per_page=5');
+                const data = await response.json();
+                this.recentNotices = data.items || [];
+            } catch (error) {
+                console.error('최근 공지사항 로딩 실패:', error);
+            }
+        },
+        
+        viewUserDetail(userId) {
+            window.location.href = `/admin/users/${userId}/detail`;
+        },
+
+        async approveUser(user, approved) {
+            const action = approved ? '승인' : '거부';
+            if (!confirm(`사용자 "${user.name}"을 정말 ${action}하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch(`/api/admin/users/${user.id}/approve`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        approved: approved,
+                        reason: ''
+                    })
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: `사용자가 ${action}되었습니다` }));
+                    this.loadPendingUsers();
+                    this.loadUserStats();
+                } else {
+                    throw new Error(`${action} 실패`);
+                }
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: `사용자 ${action}에 실패했습니다` }));
+            }
+        },
+        
+        editNotice(notice) {
+            // TODO: 공지사항 수정 모달
+            window.dispatchEvent(new CustomEvent('toast-success', { detail: '공지사항 수정 기능 구현 예정' }));
+        },
+        
+        async deleteNotice(notice) {
+            if (!confirm(`공지사항 "${notice.title}"을 정말 삭제하시겠습니까?`)) return;
+            
+            try {
+                const response = await fetch(`/api/admin/notices/${notice.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '공지사항이 삭제되었습니다' }));
+                    this.loadRecentNotices();
+                } else {
+                    throw new Error('삭제 실패');
+                }
+            } catch (error) {
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: '공지사항 삭제에 실패했습니다' }));
+            }
+        },
+        
+        async createNotice() {
+            try {
+                // 폼 검증
+                if (!this.noticeForm.title.trim()) {
+                    window.dispatchEvent(new CustomEvent('toast-error', { detail: '제목을 입력해주세요' }));
+                    return;
+                }
+                if (!this.noticeForm.content.trim()) {
+                    window.dispatchEvent(new CustomEvent('toast-error', { detail: '내용을 입력해주세요' }));
+                    return;
+                }
+                if (this.noticeForm.content.trim().length < 10) {
+                    window.dispatchEvent(new CustomEvent('toast-error', { detail: '내용은 최소 10자 이상 입력해주세요' }));
+                    return;
+                }
+                
+                this.creatingNotice = true;
+                
+                const response = await fetch('/api/admin/notices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.noticeForm.title.trim(),
+                        content: this.noticeForm.content.trim(),
+                        is_important: this.noticeForm.is_important
+                    })
+                });
+                
+                if (response.ok) {
+                    window.dispatchEvent(new CustomEvent('toast-success', { detail: '공지사항이 작성되었습니다' }));
+                    this.showNoticeCreateModal = false;
+                    this.noticeForm = { title: '', content: '', is_important: false };
+                    this.loadRecentNotices();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || '공지사항 작성에 실패했습니다');
+                }
+            } catch (error) {
+                console.error('공지사항 작성 실패:', error);
+                window.dispatchEvent(new CustomEvent('toast-error', { detail: error.message || '공지사항 작성에 실패했습니다' }));
+            } finally {
+                this.creatingNotice = false;
+            }
+        },
+        
+        formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('ko-KR');
+        },
+        
+    }
+}
+
+// 글로벌 로그아웃 함수 (헤더에서 사용)
+async function logout() {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+            window.dispatchEvent(new CustomEvent('toast-success', { detail: '로그아웃되었습니다' }));
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1000);
+        } else {
+            throw new Error('로그아웃 실패');
+        }
+    } catch (error) {
+        console.error('로그아웃 오류:', error);
+        window.dispatchEvent(new CustomEvent('toast-error', { detail: '로그아웃에 실패했습니다' }));
+    }
+}
+</script>
+{% endblock %}

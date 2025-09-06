@@ -1,0 +1,38 @@
+<page path="/signup">
+    <header></header>
+    <form action="/api/auth/signup">
+        <title>회원가입 및 거래처 등록</title>
+        <error-message />
+        
+        <section>
+            <subtitle>계정 정보</subtitle>
+            <input type="email" label="이메일" required />
+            <input type="password" label="비밀번호" required />
+            <input type="password" label="비밀번호 확인" required />
+            <input type="text" label="담당자명" required />
+            <input type="tel" label="연락처" required />
+        </section>
+        
+        <section>
+            <subtitle>거래처 정보</subtitle>
+            <input type="text" label="업체명" required />
+            <select label="업체 유형" required>
+                <option value="wholesale">도매업체</option>
+                <option value="retail">소매업체</option>
+            </select>
+            <input type="text" label="사업자등록번호" required />
+            <input type="text" label="업체 주소" required />
+            <textarea label="업체 소개" />
+        </section>
+        
+        <notice>
+            회원가입 신청 후 관리자 승인이 필요합니다.
+        </notice>
+        
+        <button type="submit">가입 신청</button>
+    </form>
+    <text>
+    이미 계정이 있으신가요? <link href="/login">로그인</link>
+    </text>
+    <footer></footer>
+</page>

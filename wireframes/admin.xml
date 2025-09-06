@@ -1,0 +1,30 @@
+<page path="/admin">
+    <header></header>
+    <nav></nav>
+    <title>관리자</title>
+    <tabs>
+        <tab active>승인관리</tab>
+        <tab>사용자관리</tab>
+        <tab>시스템관리</tab>
+    </tabs>
+    <section>
+        <title>승인 대기 목록</title>
+        <table>
+            <headers>업체명|담당자|유형|신청일</headers>
+            <rows>
+                <row>
+                    <company>ABC상회</company>
+                    <name>김담당</name>
+                    <type>도매업체</type>
+                    <date>2024-01-15</date>
+                    <actions>
+                        <button>세부정보</button>
+                        <button>승인</button>
+                        <button>거부</button>
+                    </actions>
+                </row>
+            </rows>
+        </table>
+    </section>
+    <footer></footer>
+</page>
