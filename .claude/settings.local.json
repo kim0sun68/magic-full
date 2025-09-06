@@ -7,7 +7,14 @@
       "mcp__playwright__browser_click",
       "Bash(python3:*)",
       "mcp__playwright__browser_wait_for",
-      "mcp__sequential-thinking__sequentialthinking"
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(magic-railway-test:*)",
+      "Bash(curl:*)",
+      "Bash(for i in {1..5})",
+      "Bash(done)",
+      "Bash(docker stop:*)"
     ],
     "deny": [],
     "ask": []

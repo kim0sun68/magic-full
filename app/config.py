@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     # 애플리케이션 기본 설정
     APP_NAME: str = "마법옷장"
     APP_VERSION: str = "1.0.0"
+    ENVIRONMENT: str = "development"  # development | production
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"
     

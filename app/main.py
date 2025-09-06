@@ -3,7 +3,7 @@
 남대문시장 아동복 B2B 재고관리 플랫폼
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -11,11 +11,81 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 import logging
+import time
+from collections import defaultdict
+import asyncio
 
 import config
 import database
 import startup
 from auth.middleware import get_current_user_optional
+
+
+# Rate Limiting 클래스 (간단한 메모리 기반)
+class RateLimiter:
+    def __init__(self):
+        self.requests = defaultdict(list)
+        self.auth_requests = defaultdict(list)
+    
+    def is_allowed(self, client_ip: str, endpoint_type: str = "api") -> bool:
+        now = time.time()
+        window = 60  # 1분
+        
+        if endpoint_type == "auth":
+            limit = 10  # 인증: 분당 10회
+            request_list = self.auth_requests[client_ip]
+        else:
+            limit = 60  # API: 분당 60회
+            request_list = self.requests[client_ip]
+        
+        # 1분 이전 요청들 제거
+        while request_list and request_list[0] <= now - window:
+            request_list.pop(0)
+        
+        if len(request_list) >= limit:
+            return False
+        
+        request_list.append(now)
+        return True
+
+
+rate_limiter = RateLimiter()
+
+
+# 보안 헤더 미들웨어
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    
+    # Railway 환경에 맞는 보안 헤더
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    
+    # Railway HTTPS 환경에서만 HSTS 적용
+    if request.headers.get("x-forwarded-proto") == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    
+    return response
+
+
+# Rate Limiting 미들웨어
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host
+    path = request.url.path
+    
+    # 헬스체크는 Rate Limiting 제외
+    if path.startswith("/health"):
+        return await call_next(request)
+    
+    # 엔드포인트 타입 결정
+    endpoint_type = "auth" if path.startswith("/api/auth") else "api"
+    
+    if not rate_limiter.is_allowed(client_ip, endpoint_type):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    
+    return await call_next(request)
 
 
 # 애플리케이션 시작/종료 이벤트 관리
@@ -48,18 +118,40 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 미들웨어 설정
+# Railway 배포용 미들웨어 설정
+# 보안 헤더 미들웨어 (최우선 적용)
+app.middleware("http")(add_security_headers)
+
+# Rate Limiting 미들웨어 
+app.middleware("http")(rate_limit_middleware)
+
+# Railway 도메인 허용 (railway.app 하위도메인)
 app.add_middleware(
     TrustedHostMiddleware, 
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0", "testserver"]
+    allowed_hosts=["*"]  # Railway에서 동적 도메인 할당하므로 전체 허용
 )
+
+# Railway CORS 설정 (프로덕션 + 로컬 개발)
+allowed_origins = [
+    "http://localhost",
+    "http://127.0.0.1", 
+    "http://localhost:3000",  # 프론트엔드 개발 서버
+]
+
+# Railway 도메인 추가 (환경변수로 받으면 더 좋음)
+if config.settings.ENVIRONMENT == "production":
+    allowed_origins.extend([
+        "https://*.railway.app",
+        "https://*.up.railway.app"
+    ])
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://127.0.0.1"],
+    allow_origins=["*"],  # Railway 동적 도메인으로 인해 임시 전체 허용
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # 정적 파일 및 템플릿 설정
