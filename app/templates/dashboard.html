@@ -212,43 +212,6 @@ document.addEventListener('htmx:afterSwap', function(event) {
     }
 });
 
-function userHeader() {
-    return {
-        userMenu: false,
-        user: null,
-        company: null,
-        
-        async loadUserInfo() {
-            try {
-                // 사용자 정보 로드
-                const userResponse = await fetch('/api/auth/me', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include'
-                });
-                
-                if (userResponse.ok) {
-                    this.user = await userResponse.json();
-                }
-                
-                // 회사 정보 로드 (관리자가 아닌 경우)
-                if (this.user && this.user.role !== 'admin') {
-                    const companyResponse = await fetch('/api/companies/me', {
-                        method: 'GET',
-                        headers: { 'Content-Type': 'application/json' },
-                        credentials: 'include'
-                    });
-                    
-                    if (companyResponse.ok) {
-                        this.company = await companyResponse.json();
-                    }
-                }
-            } catch (error) {
-                console.error('사용자 정보 로드 오류:', error);
-            }
-        }
-    }
-}
 
 function navigation() {
     return {
