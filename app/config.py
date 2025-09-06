@@ -20,15 +20,15 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"
     
-    # Supabase 설정
-    SUPABASE_URL: str
-    SUPABASE_ANON_KEY: str
-    SUPABASE_JWT_SECRET: str
-    SUPABASE_SERVICE_ROLE_KEY: str
+    # Supabase 설정 (Railway 환경에서 Optional 처리)
+    SUPABASE_URL: str = "https://vrsbmygqyfvvuaixibrh.supabase.co"
+    SUPABASE_ANON_KEY: str = "temp_key_for_railway"  # Railway에서 실제 키로 덮어쓰기
+    SUPABASE_JWT_SECRET: str = "temp_secret_for_railway"
+    SUPABASE_SERVICE_ROLE_KEY: str = "temp_service_key_for_railway"
     SUPABASE_PROJECT_ID: str = "vrsbmygqyfvvuaixibrh"
     
-    # JWT 토큰 설정
-    SESSION_SECRET: str
+    # JWT 토큰 설정 (Railway 환경에서 Optional 처리)
+    SESSION_SECRET: str = "temp_session_secret_for_railway_deployment"
     JWT_ACCESS_EXPIRE_MINUTES: int = 15
     JWT_REFRESH_EXPIRE_DAYS: int = 30
     JWT_ALGORITHM: str = "HS256"
@@ -44,11 +44,11 @@ class Settings(BaseSettings):
     COOKIE_DOMAIN: str = "localhost"
     COOKIE_HTTPONLY: bool = True
     
-    # Wasabi Cloud 스토리지 설정
-    WASABI_ACCESS_KEY: str
-    WASABI_SECRET_KEY: str
-    WASABI_BUCKET: str
-    WASABI_ENDPOINT: str
+    # Wasabi Cloud 스토리지 설정 (Railway 환경에서 Optional 처리)
+    WASABI_ACCESS_KEY: str = "temp_wasabi_key"
+    WASABI_SECRET_KEY: str = "temp_wasabi_secret"  
+    WASABI_BUCKET: str = "magic-wardrobe-files"
+    WASABI_ENDPOINT: str = "https://s3.ap-northeast-1.wasabisys.com"
     WASABI_REGION: str = "ap-northeast-1"
     
     # 파일 업로드 제한
@@ -80,6 +80,32 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=True
     )
+    
+    def __post_init__(self):
+        """Railway 프로덕션 환경에서 필수 환경변수 확인"""
+        if self.ENVIRONMENT == "production":
+            # Railway에서 실제 환경변수가 설정되지 않은 경우 경고
+            temp_values = [
+                "temp_key_for_railway",
+                "temp_secret_for_railway", 
+                "temp_service_key_for_railway",
+                "temp_session_secret_for_railway_deployment",
+                "temp_wasabi_key",
+                "temp_wasabi_secret"
+            ]
+            
+            current_values = [
+                self.SUPABASE_ANON_KEY,
+                self.SUPABASE_JWT_SECRET,
+                self.SUPABASE_SERVICE_ROLE_KEY, 
+                self.SESSION_SECRET,
+                self.WASABI_ACCESS_KEY,
+                self.WASABI_SECRET_KEY
+            ]
+            
+            if any(val in temp_values for val in current_values):
+                import logging
+                logging.warning("🚨 Production mode with temporary values detected. Set proper environment variables in Railway dashboard.")
     
     def get_allowed_image_types(self) -> List[str]:
         """허용된 이미지 타입 리스트 반환"""
